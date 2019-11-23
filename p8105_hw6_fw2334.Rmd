@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(modelr)
 library(mgcv)
+library(patchwork)
 ```
 
 ### Problem 1
@@ -132,7 +133,18 @@ bootstrap_results = boot_straps %>%
     log_b0b1 = log(b0*b1),
     r2 = map(models, broom::glance)) %>%
   unnest(cols = c(r2))
-  
-  
+```
+
+#### Distributions
+```{r}
+r2_dist = bootstrap_results %>% 
+  ggplot(aes(x = r.squared)) +
+  geom_histogram()
+
+logb0b1_dist = bootstrap_results %>% 
+  ggplot(aes(x = log_b0b1)) +
+  geom_histogram()
+
+r2_dist + logb0b1_dist
 ```
 
