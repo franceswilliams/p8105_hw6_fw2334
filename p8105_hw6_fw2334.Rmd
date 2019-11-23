@@ -61,7 +61,7 @@ bw_respred_m2 %>%
 model3 = lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = birthweight_data)
 ```
 
-#### Cross valication
+#### Cross validation
 ```{r}
 
 cv_df = crossv_mc(data = birthweight_data, n = 100)
@@ -89,7 +89,7 @@ cv_df %>%
 
 # Problem 2
 
-```{r echo = FALSE}
+```{r message = FALSE}
 weather_df = 
   rnoaa::meteo_pull_monitors(
     c("USW00094728"),
@@ -120,6 +120,19 @@ boot_straps =
 bootstrap_results = boot_straps %>% 
   mutate(
     models = map(strap_sample, ~ lm(tmax ~ tmin, data = .x)),
-    results = map(models, broom::tidy))
+    results = map(models, broom::tidy)) %>%
+  unnest(cols = c(results)) %>% 
+  select(strap_number, term, estimate, models) %>% 
+  pivot_wider(
+    names_from = term,
+    values_from = estimate) %>% 
+  janitor::clean_names() %>% 
+  rename(b0 = intercept, b1 = tmin) %>% 
+  mutate(
+    log_b0b1 = log(b0*b1),
+    r2 = map(models, broom::glance)) %>%
+  unnest(cols = c(r2))
+  
+  
 ```
 
