@@ -14,10 +14,10 @@ library(mgcv)
 library(patchwork)
 ```
 
-### Problem 1
+# Problem 1
 
 Importing and tidying data
-```{r}
+```{r message = FALSE}
 birthweight_data = read_csv(file = "./files/birthweight.csv") %>% 
   mutate(
     babysex = factor(babysex, levels = c(1,2), labels = c("male", "female")),
@@ -27,14 +27,13 @@ birthweight_data = read_csv(file = "./files/birthweight.csv") %>%
   )
 ```
 
-Modeling
+#### Modeling
+
+The following model is proposed based on factors clinically relevant to predicting birthweight. 
 ```{r}
 set.seed(1)
 
-model1 = lm(bwt ~ ppbmi + gaweeks + smoken + malform, data = birthweight_data)
-
-model1 %>% 
-  broom::tidy()
+model1 = lm(bwt ~ gaweeks + babysex + bhead, data = birthweight_data)
 
 bw_res_pred = birthweight_data %>% 
   modelr::add_residuals(model1) %>% 
@@ -46,23 +45,8 @@ bw_res_pred %>%
 
 ```
 
-Other model comparisons
-```{r}
-model2 = lm(bwt ~ blength + gaweeks, data = birthweight_data)
 
-bw_respred_m2 = birthweight_data %>% 
-  modelr::add_residuals(model2) %>% 
-  modelr::add_predictions(model2) 
-
-bw_respred_m2 %>% 
-  ggplot(aes(x = pred, y = resid)) + 
-  geom_point()
-
-
-model3 = lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = birthweight_data)
-```
-
-#### Cross validation
+#### Other model comparisons and cross validation
 ```{r}
 
 cv_df = crossv_mc(data = birthweight_data, n = 100)
@@ -90,6 +74,8 @@ cv_df %>%
 
 # Problem 2
 
+
+#### Loading data
 ```{r message = FALSE}
 weather_df = 
   rnoaa::meteo_pull_monitors(
@@ -104,6 +90,8 @@ weather_df =
   select(name, id, everything())
 ```
 
+
+#### Bootstrapping
 ```{r}
 set.seed(1)
 
@@ -135,8 +123,9 @@ bootstrap_results = boot_straps %>%
   unnest(cols = c(r2))
 ```
 
+
 #### Distributions
-```{r}
+```{r message = FALSE}
 r2_dist = bootstrap_results %>% 
   ggplot(aes(x = r.squared)) +
   geom_histogram()
@@ -148,3 +137,4 @@ logb0b1_dist = bootstrap_results %>%
 r2_dist + logb0b1_dist
 ```
 
+Both distributions look normal, with the average r^2 value falling around 0.91 and the average log(β0∗β1) falling around 2.03. The 95% confidence interval for r^2 is (`r round(quantile(pull(bootstrap_results, r.squared), probs = c(0.025, 0.975)), digits = 2)`), and the 95% confidence interval for the log(β0∗β1) is (`r round(quantile(pull(bootstrap_results, log_b0b1), probs = c(0.025, 0.975)), digits = 2)`).
